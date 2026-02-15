@@ -1,0 +1,9 @@
+# Example airfoil list file
+# One airfoil name per line
+# Lines starting with # are ignored
+
+ag16-il
+e325-il
+naca0012-il
+naca2412-il
+clarky-il

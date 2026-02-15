@@ -40,9 +40,6 @@ const AirfoilShape: React.FC<Props> = ({
       setError(null);
 
       try {
-        // Extract base airfoil name (remove -il suffix if present)
-        const baseName = airfoilName.replace(/-il$/, '');
-
         // Fetch metadata first
         const { data: metadataData, error: metadataError } = await supabase
           .from('airfoil_coordinates_metadata')
@@ -57,11 +54,11 @@ const AirfoilShape: React.FC<Props> = ({
 
         setMetadata(metadataData as CoordinateMetadata);
 
-        // Fetch coordinates
+        // Fetch coordinates using the full airfoil name (not basename)
         const { data: coordinatesData, error: coordinatesError } = await supabase
           .from('airfoil_coordinates')
           .select('x, y, point_order')
-          .eq('airfoil_name', baseName)
+          .eq('airfoil_name', airfoilName)
           .order('point_order', { ascending: true });
 
         if (coordinatesError) {

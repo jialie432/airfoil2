@@ -24,12 +24,7 @@ export interface AirfoilPolar {
 
 export interface SearchFilters {
   reynolds: number | null;
-  alphaMin: number | null;
-  alphaMax: number | null;
-  clMin: number | null;
-  clMax: number | null;
-  cdMin: number | null;
-  cdMax: number | null;
-  clcdMin: number | null;
-  clcdMax: number | null;
+  minCl: number | null; // Minimum Cl threshold - only return airfoils with max_cl > minCl
+  sortBy: 'cl' | 'cd' | 'clcd' | null; // Sort by Cl, Cd, or L/D (Cl/Cd)
+  sortOrder: 'asc' | 'desc'; // Ascending or Descending
 }

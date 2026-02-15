@@ -2,14 +2,24 @@ import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 
 // Get current directory for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables from .env.local
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
 // Initialize Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://hppgprzfcvqrvrwaimmm.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwcGdwcnpmY3ZxcnZyd2FpbW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTgzNDksImV4cCI6MjA4MzczNDM0OX0.-MHynVQrqyXCjIkZDviFHF9o_nm_8Kleo61z7xYD8Hw';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Error: Supabase URL and Key must be set in environment variables');
+  console.error('Required: VITE_SUPABASE_URL (or SUPABASE_URL) and VITE_SUPABASE_SERVICE_KEY (or VITE_SUPABASE_ANON_KEY)');
+  process.exit(1);
+}
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Error: Supabase URL and Key must be set in environment variables');
@@ -306,7 +316,7 @@ async function loadAllCoordinateFiles(directoryPath: string): Promise<void> {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const directoryPath = args[0] || path.join(__dirname, '../airfoil_coordinates');
+  const directoryPath = args[0] || path.join(__dirname, '../all_airfoils');
 
   if (!fs.existsSync(directoryPath)) {
     console.error(`Error: Directory not found: ${directoryPath}`);

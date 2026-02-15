@@ -3,14 +3,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { parseXfoilCSV } from '../services/csvParser';
+import dotenv from 'dotenv';
 
 // Get current directory for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables from .env.local
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+
 // Initialize Supabase client
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://hppgprzfcvqrvrwaimmm.supabase.co';
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwcGdwcnpmY3ZxcnZyd2FpbW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTgzNDksImV4cCI6MjA4MzczNDM0OX0.-MHynVQrqyXCjIkZDviFHF9o_nm_8Kleo61z7xYD8Hw';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Error: Supabase URL and Key must be set in environment variables');
@@ -174,7 +178,7 @@ async function loadCsvFile(filePath: string, filename: string): Promise<void> {
     // Insert data points in batches
     for (let i = 0; i < dataPoints.length; i += batchSize) {
       const batch = dataPoints.slice(i, i + batchSize);
-      
+
       const { error: dataError } = await supabase
         .from('airfoil_polar_data_points')
         .insert(batch);
@@ -209,7 +213,7 @@ async function loadAllCsvFiles(directoryPath: string): Promise<void> {
   const concurrency = 5; // Adjust based on your needs
   for (let i = 0; i < csvFiles.length; i += concurrency) {
     const batch = csvFiles.slice(i, i + concurrency);
-    
+
     await Promise.allSettled(
       batch.map(async (filename) => {
         try {
@@ -236,7 +240,7 @@ async function loadAllCsvFiles(directoryPath: string): Promise<void> {
   console.log('Load Summary:');
   console.log(`✓ Successfully loaded: ${successCount} files`);
   console.log(`✗ Errors: ${errorCount} files`);
-  
+
   if (errors.length > 0) {
     console.log('\nErrors:');
     errors.slice(0, 10).forEach(({ file, error }) => {

@@ -232,7 +232,7 @@ const AirfoilShape: React.FC<Props> = ({
           {/* Grid lines */}
           <defs>
             <pattern id="grid" width="0.1" height="0.1" patternUnits="userSpaceOnUse">
-              <path d="M 0.1 0 L 0 0 0 0.1" fill="none" stroke={gridColor} strokeWidth="0.01" opacity="0.3" />
+              <path d="M 0.1 0 L 0 0 0 0.1" fill="none" stroke={gridColor} strokeWidth="0.002" opacity="0.3" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -254,7 +254,7 @@ const AirfoilShape: React.FC<Props> = ({
             x2={0}
             y2={bounds.maxY + padding}
             stroke={gridColor}
-            strokeWidth="0.005"
+            strokeWidth="0.002"
             strokeDasharray="0.02 0.02"
             opacity="0.5"
           />
@@ -265,7 +265,7 @@ const AirfoilShape: React.FC<Props> = ({
               d={pathData}
               fill={fillColor}
               stroke={strokeColor}
-              strokeWidth="0.01"
+              strokeWidth="0.004"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
@@ -281,7 +281,7 @@ const AirfoilShape: React.FC<Props> = ({
               <circle
                 cx={le.x}
                 cy={-le.y}
-                r="0.01"
+                r="0.004"
                 fill={strokeColor}
                 stroke="none"
               />
@@ -301,7 +301,7 @@ const AirfoilShape: React.FC<Props> = ({
               <circle
                 cx={coordinates[coordinates.length - 1].x}
                 cy={-coordinates[coordinates.length - 1].y}
-                r="0.008"
+                r="0.003"
                 fill={strokeColor}
                 stroke="none"
               />

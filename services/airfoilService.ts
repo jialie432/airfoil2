@@ -84,12 +84,12 @@ async function fetchDataPointsBatch(polarMetadataIds: number[]): Promise<Map<num
   }
 
   // Supabase has limits on .in() queries, so we need to batch them
-  const batchSize = 100; // Conservative limit for Supabase
+  const batchSize = 10; // Conservative limit for Supabase
   const allData: (DatabaseDataPoint & { polar_metadata_id: number })[] = [];
 
   for (let i = 0; i < polarMetadataIds.length; i += batchSize) {
     const batch = polarMetadataIds.slice(i, i + batchSize);
-
+    console.log("batch", batch);
     const { data, error } = await supabase
       .from('airfoil_polar_data_points')
       .select('polar_metadata_id, alpha, cl, cd, cdp, cm, top_xtr, bot_xtr, clcd')
@@ -112,11 +112,12 @@ async function fetchDataPointsBatch(polarMetadataIds: number[]): Promise<Map<num
     const polarId = point.polar_metadata_id;
     if (!resultMap.has(polarId)) {
       resultMap.set(polarId, []);
+      console.log("add polarId to resultMap.keys", polarId);
     }
     const { polar_metadata_id, ...dataPoint } = point;
     resultMap.get(polarId)!.push(dataPoint);
   }
-
+  console.log("resultMap.keys", resultMap.keys());
   return resultMap;
 }
 
@@ -159,7 +160,7 @@ async function fetchAllMetadata(reynolds: number | null, minCl: number | null): 
       hasMore = false;
       break;
     }
-
+    console.log(data.length);
     allMetadata.push(...(data as DatabaseMetadata[]));
 
     // If we got fewer results than page size, we're done
@@ -223,29 +224,31 @@ export async function searchAirfoils(filters: SearchFilters): Promise<AirfoilPol
   try {
     // Step 1: Fetch metadata with Reynolds and minimum Cl filters applied at database level
     const metadataArray = await fetchAllMetadata(filters.reynolds, filters.minCl);
-
+    console.log(metadataArray.length);
     if (metadataArray.length === 0) {
       return [];
     }
 
     // Step 2: Fetch data points for all matching polars in batch
     const metadataIds = metadataArray.map(m => m.id);
+    console.log("metadataIds.length", metadataIds.length);
     const dataPointsMap = await fetchDataPointsBatch(metadataIds);
-
+    console.log(dataPointsMap.size);
     // Step 3: Convert to AirfoilPolar format
     const polars: AirfoilPolar[] = [];
 
     for (const metadata of metadataArray) {
       const dataPoints = dataPointsMap.get(metadata.id) || [];
+      console.log(dataPoints.length);
       if (dataPoints.length > 0) {
         const polar = convertToAirfoilPolar(metadata, dataPoints);
         polars.push(polar);
       }
     }
-
+    console.log(polars.length);
     // Step 4: Sort/rank the results based on user selection
     const sortedPolars = sortAirfoils(polars, filters.sortBy, filters.sortOrder);
-
+    console.log(sortedPolars.length);
     return sortedPolars;
   } catch (error) {
     console.error('Search failed:', error);

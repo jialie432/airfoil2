@@ -1,6 +1,6 @@
 import React from 'react';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Brush
 } from 'recharts';
 import { AirfoilPolar } from '../types';
 
@@ -25,7 +25,7 @@ const AirfoilChart: React.FC<Props> = ({ polar, isDark = false }) => {
   return (
     <div className="space-y-8 mt-6">
       {/* Main Polar Chart - CL vs Alpha */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 h-[520px] transition-all">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-all">
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col">
             <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Lift Coefficient Polar (Cl vs &alpha;)</h3>
@@ -38,27 +38,27 @@ const AirfoilChart: React.FC<Props> = ({ polar, isDark = false }) => {
             HUD Scale: Auto
           </div>
         </div>
-        
-        <ResponsiveContainer width="100%" height="80%">
+
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart data={polar.data} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
             <CartesianGrid strokeDasharray="2 2" vertical={false} stroke={colors.grid} />
-            <XAxis 
-              dataKey="alpha" 
-              stroke={colors.axis} 
+            <XAxis
+              dataKey="alpha"
+              stroke={colors.axis}
               tick={{ fontSize: 10, fill: colors.text, fontWeight: 600 }}
               label={{ value: 'Angle of Attack (deg)', position: 'insideBottom', offset: -10, fontSize: 10, fill: colors.text, fontWeight: 800 }}
             />
-            <YAxis 
-              stroke={colors.axis} 
+            <YAxis
+              stroke={colors.axis}
               tick={{ fontSize: 10, fill: colors.text, fontWeight: 600 }}
               label={{ value: 'CL', angle: -90, position: 'insideLeft', offset: 10, fontSize: 10, fill: colors.text, fontWeight: 800 }}
               domain={['auto', 'auto']}
             />
-            <Tooltip 
+            <Tooltip
               isAnimationActive={false}
-              contentStyle={{ 
-                borderRadius: '8px', 
-                border: `1px solid ${colors.tooltipBorder}`, 
+              contentStyle={{
+                borderRadius: '8px',
+                border: `1px solid ${colors.tooltipBorder}`,
                 backgroundColor: colors.tooltipBg,
                 boxShadow: isDark ? '0 10px 15px -3px rgba(0,0,0,0.5)' : '0 10px 15px -3px rgba(0,0,0,0.1)',
                 color: isDark ? '#f1f5f9' : '#1e293b'
@@ -66,19 +66,19 @@ const AirfoilChart: React.FC<Props> = ({ polar, isDark = false }) => {
               labelStyle={{ fontWeight: '900', color: isDark ? '#38bdf8' : '#2563eb', fontSize: '12px' }}
               formatter={(value: any) => [parseFloat(value).toFixed(4), 'CL']}
             />
-            <Line 
-              type="monotone" 
-              dataKey="cl" 
-              stroke={colors.lift} 
-              strokeWidth={2.5} 
+            <Line
+              type="monotone"
+              dataKey="cl"
+              stroke={colors.lift}
+              strokeWidth={2.5}
               dot={false}
               activeDot={{ r: 6, strokeWidth: 2, stroke: isDark ? '#0f172a' : '#fff', fill: colors.lift }}
               animationDuration={500}
             />
-            <Brush 
-              dataKey="alpha" 
-              height={40} 
-              stroke={colors.lift} 
+            <Brush
+              dataKey="alpha"
+              height={40}
+              stroke={colors.lift}
               fill={isDark ? '#1e293b' : '#f8fafc'}
               travellerWidth={10}
               style={{ fontSize: '10px', fontWeight: 'bold' }}
@@ -89,14 +89,14 @@ const AirfoilChart: React.FC<Props> = ({ polar, isDark = false }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Drag Chart */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 h-[380px]">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
           <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Drag Response (Cd vs &alpha;)</h3>
-          <ResponsiveContainer width="100%" height="80%">
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={polar.data} margin={{ top: 5, right: 30, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
               <XAxis dataKey="alpha" stroke={colors.axis} tick={{ fontSize: 9, fill: colors.text }} />
               <YAxis stroke={colors.axis} tick={{ fontSize: 9, fill: colors.text }} domain={['auto', 'auto']} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '8px', border: `1px solid ${colors.tooltipBorder}`, backgroundColor: colors.tooltipBg }}
                 formatter={(value: any) => [parseFloat(value).toFixed(5), 'CD']}
               />
@@ -107,14 +107,14 @@ const AirfoilChart: React.FC<Props> = ({ polar, isDark = false }) => {
         </div>
 
         {/* L/D Chart */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 h-[380px]">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800">
           <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Efficiency Gradient (L/D)</h3>
-          <ResponsiveContainer width="100%" height="80%">
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={polar.data} margin={{ top: 5, right: 30, left: 10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.grid} />
               <XAxis dataKey="alpha" stroke={colors.axis} tick={{ fontSize: 9, fill: colors.text }} />
               <YAxis stroke={colors.axis} tick={{ fontSize: 9, fill: colors.text }} domain={['auto', 'auto']} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ borderRadius: '8px', border: `1px solid ${colors.tooltipBorder}`, backgroundColor: colors.tooltipBg }}
                 formatter={(value: any) => [parseFloat(value).toFixed(2), 'L/D']}
               />

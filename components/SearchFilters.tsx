@@ -19,6 +19,14 @@ const SearchFilters: React.FC<Props> = ({ filters, setFilters, onSearch }) => {
     }));
   };
 
+  const handleMinThicknessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFilters(prev => ({
+      ...prev,
+      minThickness: value === '' ? null : parseFloat(value)
+    }));
+  };
+
   const handleReynoldsSelect = (value: number) => {
     setFilters(prev => ({
       ...prev,
@@ -45,6 +53,7 @@ const SearchFilters: React.FC<Props> = ({ filters, setFilters, onSearch }) => {
     setFilters({
       reynolds: null,
       minCl: null,
+      minThickness: null,
       sortBy: null,
       sortOrder: 'desc'
     });
@@ -70,8 +79,8 @@ const SearchFilters: React.FC<Props> = ({ filters, setFilters, onSearch }) => {
                 key={re}
                 onClick={() => handleReynoldsSelect(re)}
                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all border ${filters.reynolds === re
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
-                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-900'
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-900'
                   }`}
               >
                 {re >= 1000000 ? `${re / 1000000}M` : `${re / 1000}k`}
@@ -94,6 +103,26 @@ const SearchFilters: React.FC<Props> = ({ filters, setFilters, onSearch }) => {
             value={filters.minCl ?? ''}
             onChange={handleMinClChange}
             placeholder="e.g., 1.5"
+            className="w-full max-w-xs px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
+          />
+        </div>
+
+        {/* Minimum Max-Thickness Filter */}
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">
+            Minimum Max Thickness
+            <span className="block text-[9px] font-normal text-slate-500 dark:text-slate-600 mt-1 normal-case tracking-normal">
+              Only show airfoils with max thickness at or above this value (as % chord, e.g. 0.12 = 12%)
+            </span>
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="1"
+            value={filters.minThickness ?? ''}
+            onChange={handleMinThicknessChange}
+            placeholder="e.g., 0.12"
             className="w-full max-w-xs px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
           />
         </div>

@@ -25,6 +25,7 @@ export interface AirfoilPolar {
 export interface SearchFilters {
   reynolds: number | null;
   minCl: number | null; // Minimum Cl threshold - only return airfoils with max_cl > minCl
+  minThickness: number | null; // Minimum max-thickness - only return airfoils with max_thickness >= minThickness (as % chord, e.g. 0.12 = 12%)
   sortBy: 'cl' | 'cd' | 'clcd' | null; // Sort by Cl, Cd, or L/D (Cl/Cd)
   sortOrder: 'asc' | 'desc'; // Ascending or Descending
 }

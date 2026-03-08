@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [filters, setFilters] = useState<FilterType>({
     reynolds: null,
     minCl: null,
+    minThickness: null,
     sortBy: null,
     sortOrder: 'desc'
   });

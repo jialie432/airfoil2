@@ -89,7 +89,6 @@ async function fetchDataPointsBatch(polarMetadataIds: number[]): Promise<Map<num
 
   for (let i = 0; i < polarMetadataIds.length; i += batchSize) {
     const batch = polarMetadataIds.slice(i, i + batchSize);
-    console.log("batch", batch);
     const { data, error } = await supabase
       .from('airfoil_polar_data_points')
       .select('polar_metadata_id, alpha, cl, cd, cdp, cm, top_xtr, bot_xtr, clcd')
@@ -112,19 +111,65 @@ async function fetchDataPointsBatch(polarMetadataIds: number[]): Promise<Map<num
     const polarId = point.polar_metadata_id;
     if (!resultMap.has(polarId)) {
       resultMap.set(polarId, []);
-      console.log("add polarId to resultMap.keys", polarId);
     }
     const { polar_metadata_id, ...dataPoint } = point;
     resultMap.get(polarId)!.push(dataPoint);
   }
-  console.log("resultMap.keys", resultMap.keys());
+
   return resultMap;
+}
+
+/**
+ * Fetch airfoil names whose max_thickness is >= minThickness from the coordinates metadata table.
+ * Returns a Set of airfoil names (lowercase for case-insensitive matching).
+ */
+async function fetchAirfoilsAboveThickness(minThickness: number): Promise<Set<string>> {
+  const qualifying = new Set<string>();
+  const pageSize = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('airfoil_coordinates_metadata')
+      .select('airfoil_name')
+      .gte('max_thickness', minThickness)
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      console.error('Error fetching thickness metadata:', error);
+      break;
+    }
+
+    if (!data || data.length === 0) {
+      hasMore = false;
+      break;
+    }
+
+    for (const row of data as { airfoil_name: string }[]) {
+      qualifying.add(row.airfoil_name.toLowerCase());
+    }
+
+    if (data.length < pageSize) {
+      hasMore = false;
+    } else {
+      offset += pageSize;
+    }
+  }
+
+  return qualifying;
 }
 
 /**
  * Fetch all metadata with pagination support and filtering
  */
-async function fetchAllMetadata(reynolds: number | null, minCl: number | null): Promise<DatabaseMetadata[]> {
+async function fetchAllMetadata(reynolds: number | null, minCl: number | null, minThickness: number | null): Promise<DatabaseMetadata[]> {
+  // If a thickness filter is set, first resolve which airfoil names qualify
+  let thicknessAllowSet: Set<string> | null = null;
+  if (minThickness !== null) {
+    thicknessAllowSet = await fetchAirfoilsAboveThickness(minThickness);
+  }
+
   const allMetadata: DatabaseMetadata[] = [];
   const pageSize = 1000; // Supabase default/max limit per page
   let offset = 0;
@@ -160,8 +205,12 @@ async function fetchAllMetadata(reynolds: number | null, minCl: number | null): 
       hasMore = false;
       break;
     }
-    console.log(data.length);
-    allMetadata.push(...(data as DatabaseMetadata[]));
+
+    // Apply thickness filter in memory (thickness lives in a separate table)
+    const page = (data as DatabaseMetadata[]).filter(m =>
+      thicknessAllowSet === null || thicknessAllowSet.has(m.airfoil_name.toLowerCase())
+    );
+    allMetadata.push(...page);
 
     // If we got fewer results than page size, we're done
     if (data.length < pageSize) {
@@ -222,34 +271,29 @@ function sortAirfoils(polars: AirfoilPolar[], sortBy: 'cl' | 'cd' | 'clcd' | nul
  */
 export async function searchAirfoils(filters: SearchFilters): Promise<AirfoilPolar[]> {
   try {
-    // Step 1: Fetch metadata with Reynolds and minimum Cl filters applied at database level
-    const metadataArray = await fetchAllMetadata(filters.reynolds, filters.minCl);
-    console.log(metadataArray.length);
+    // Step 1: Fetch metadata with Reynolds, minimum Cl, and minimum thickness filters
+    const metadataArray = await fetchAllMetadata(filters.reynolds, filters.minCl, filters.minThickness);
     if (metadataArray.length === 0) {
       return [];
     }
 
     // Step 2: Fetch data points for all matching polars in batch
     const metadataIds = metadataArray.map(m => m.id);
-    console.log("metadataIds.length", metadataIds.length);
     const dataPointsMap = await fetchDataPointsBatch(metadataIds);
-    console.log(dataPointsMap.size);
+
     // Step 3: Convert to AirfoilPolar format
     const polars: AirfoilPolar[] = [];
 
     for (const metadata of metadataArray) {
       const dataPoints = dataPointsMap.get(metadata.id) || [];
-      console.log(dataPoints.length);
       if (dataPoints.length > 0) {
         const polar = convertToAirfoilPolar(metadata, dataPoints);
         polars.push(polar);
       }
     }
-    console.log(polars.length);
+
     // Step 4: Sort/rank the results based on user selection
-    const sortedPolars = sortAirfoils(polars, filters.sortBy, filters.sortOrder);
-    console.log(sortedPolars.length);
-    return sortedPolars;
+    return sortAirfoils(polars, filters.sortBy, filters.sortOrder);
   } catch (error) {
     console.error('Search failed:', error);
     return [];

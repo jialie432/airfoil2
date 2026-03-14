@@ -4,9 +4,13 @@ import { searchAirfoils, getAllAirfoils } from './services/airfoilService';
 import SearchFilters from './components/SearchFilters';
 import AirfoilChart from './components/AirfoilChart';
 import AirfoilShape from './components/AirfoilShape';
+import LiftDragCalculator from './components/LiftDragCalculator';
+
+type Page = 'database' | 'calculator';
 
 const App: React.FC = () => {
   const [isDark, setIsDark] = useState(true); // Default to Dark Mode for aviation feel
+  const [activePage, setActivePage] = useState<Page>('database');
   const [filters, setFilters] = useState<FilterType>({
     reynolds: null,
     minCl: null,
@@ -78,7 +82,35 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Tab Navigation */}
+            <nav className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                id="tab-database"
+                onClick={() => setActivePage('database')}
+                className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+                  activePage === 'database'
+                    ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                Airfoil DB
+              </button>
+              <button
+                id="tab-calculator"
+                onClick={() => setActivePage('calculator')}
+                className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+                  activePage === 'calculator'
+                    ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                L&amp;D Calc
+              </button>
+            </nav>
+
+            <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
+
             <button
               onClick={toggleTheme}
               className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-yellow-400 border border-slate-200 dark:border-slate-700 hover:scale-105 transition-all"
@@ -99,136 +131,148 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-grow max-w-[1600px] mx-auto w-full p-6 space-y-6">
-        <SearchFilters filters={filters} setFilters={setFilters} onSearch={handleSearch} />
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Results Selection Sidebar */}
-          <div className="xl:col-span-3">
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Target Index</span>
-                <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded">{results.length} Airfoils</span>
-              </div>
-              <div className="max-h-[700px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
-                {results.map((polar) => (
-                  <button
-                    key={polar.polarKey}
-                    onClick={() => setSelectedAirfoil(polar)}
-                    className={`w-full text-left p-5 transition-all group relative ${selectedAirfoil?.polarKey === polar.polarKey ? 'bg-blue-50/40 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                  >
-                    {selectedAirfoil?.polarKey === polar.polarKey && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
-                    )}
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`text-sm font-black tracking-tight ${selectedAirfoil?.polarKey === polar.polarKey ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {polar.airfoilName.toUpperCase()}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400 mono">Re {polar.reynolds / 1000}k</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-700">L/D {polar.maxClCd.toFixed(1)}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-700">NC {polar.ncrit}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* ── Airfoil Database Page ── */}
+        {activePage === 'database' && (
+          <>
+            <SearchFilters filters={filters} setFilters={setFilters} onSearch={handleSearch} />
 
-          {/* Main Content Area */}
-          <div className="xl:col-span-9">
-            {selectedAirfoil ? (
-              <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-                {/* Profile Summary HUD */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="px-2 py-0.5 bg-blue-600 text-white rounded-[4px] text-[10px] font-black uppercase tracking-[0.2em]">Live Analysis</span>
-                        <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">ID: {selectedAirfoil.polarKey}</span>
-                      </div>
-                      <h2 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{selectedAirfoil.airfoilName}</h2>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Operating Status</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-emerald-500 font-black text-xs uppercase tracking-widest">Nominal</span>
-                        <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                      </div>
-                    </div>
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+              {/* Results Selection Sidebar */}
+              <div className="xl:col-span-3">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                  <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Target Index</span>
+                    <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded">{results.length} Airfoils</span>
                   </div>
-
-                  {/* Avionics Grid Sensors */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    {[
-                      { label: 'Reynolds Number', value: selectedAirfoil.reynolds.toLocaleString(), sub: 'Re' },
-                      { label: 'Max L/D Ratio', value: selectedAirfoil.maxClCd.toFixed(4), sub: 'Efficiency' },
-                      { label: 'Critical Alpha', value: `${selectedAirfoil.maxClCdAlpha.toFixed(2)}°`, sub: 'Peak AOA' },
-                      { label: 'Mach Profile', value: selectedAirfoil.mach.toFixed(2), sub: 'Velocity' }
-                    ].map((sensor, i) => (
-                      <div key={i} className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{sensor.label}</p>
-                        <p className="text-2xl font-black text-slate-900 dark:text-blue-400 mono">{sensor.value}</p>
-                        <p className="text-[8px] font-black text-blue-500 uppercase mt-1 tracking-widest">{sensor.sub}</p>
-                      </div>
+                  <div className="max-h-[700px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                    {results.map((polar) => (
+                      <button
+                        key={polar.polarKey}
+                        onClick={() => setSelectedAirfoil(polar)}
+                        className={`w-full text-left p-5 transition-all group relative ${selectedAirfoil?.polarKey === polar.polarKey ? 'bg-blue-50/40 dark:bg-blue-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                      >
+                        {selectedAirfoil?.polarKey === polar.polarKey && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
+                        )}
+                        <div className="flex justify-between items-start mb-2">
+                          <span className={`text-sm font-black tracking-tight ${selectedAirfoil?.polarKey === polar.polarKey ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                            {polar.airfoilName.toUpperCase()}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 mono">Re {polar.reynolds / 1000}k</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-700">L/D {polar.maxClCd.toFixed(1)}</div>
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-700">NC {polar.ncrit}</div>
+                        </div>
+                      </button>
                     ))}
                   </div>
-
-                  {/* Airfoil Shape SVG */}
-                  <div className="mb-8">
-                    <AirfoilShape
-                      airfoilName={selectedAirfoil.airfoilName}
-                      isDark={isDark}
-                      width={800}
-                      height={400}
-                    />
-                  </div>
-
-                  <AirfoilChart polar={selectedAirfoil} isDark={isDark} />
                 </div>
+              </div>
 
-                {/* Technical Log Table */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Static Polar Log (XFOIL Data)</h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
-                        <tr>
-                          <th className="px-6 py-4">Alpha</th>
-                          <th className="px-6 py-4 text-blue-500">Cl (Lift)</th>
-                          <th className="px-6 py-4 text-rose-500">Cd (Drag)</th>
-                          <th className="px-6 py-4 text-emerald-500">Efficiency</th>
-                          <th className="px-6 py-4">Moment</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs mono">
-                        {selectedAirfoil.data.map((pt, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                            <td className="px-6 py-3 font-bold">{pt.alpha.toFixed(3)}°</td>
-                            <td className="px-6 py-3 text-blue-500 font-bold">{pt.cl.toFixed(4)}</td>
-                            <td className="px-6 py-3 text-rose-500/80">{pt.cd.toFixed(5)}</td>
-                            <td className="px-6 py-3 text-emerald-500 font-black">{pt.clcd.toFixed(2)}</td>
-                            <td className="px-6 py-3 text-slate-400">{pt.cm.toFixed(4)}</td>
-                          </tr>
+              {/* Main Content Area */}
+              <div className="xl:col-span-9">
+                {selectedAirfoil ? (
+                  <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
+                    {/* Profile Summary HUD */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+                      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="px-2 py-0.5 bg-blue-600 text-white rounded-[4px] text-[10px] font-black uppercase tracking-[0.2em]">Live Analysis</span>
+                            <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">ID: {selectedAirfoil.polarKey}</span>
+                          </div>
+                          <h2 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">{selectedAirfoil.airfoilName}</h2>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Operating Status</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-emerald-500 font-black text-xs uppercase tracking-widest">Nominal</span>
+                            <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Avionics Grid Sensors */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        {[
+                          { label: 'Reynolds Number', value: selectedAirfoil.reynolds.toLocaleString(), sub: 'Re' },
+                          { label: 'Max L/D Ratio', value: selectedAirfoil.maxClCd.toFixed(4), sub: 'Efficiency' },
+                          { label: 'Critical Alpha', value: `${selectedAirfoil.maxClCdAlpha.toFixed(2)}°`, sub: 'Peak AOA' },
+                          { label: 'Mach Profile', value: selectedAirfoil.mach.toFixed(2), sub: 'Velocity' }
+                        ].map((sensor, i) => (
+                          <div key={i} className="p-5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{sensor.label}</p>
+                            <p className="text-2xl font-black text-slate-900 dark:text-blue-400 mono">{sensor.value}</p>
+                            <p className="text-[8px] font-black text-blue-500 uppercase mt-1 tracking-widest">{sensor.sub}</p>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
+                      </div>
+
+                      {/* Airfoil Shape SVG */}
+                      <div className="mb-8">
+                        <AirfoilShape
+                          airfoilName={selectedAirfoil.airfoilName}
+                          isDark={isDark}
+                          width={800}
+                          height={400}
+                        />
+                      </div>
+
+                      <AirfoilChart polar={selectedAirfoil} isDark={isDark} />
+                    </div>
+
+                    {/* Technical Log Table */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Static Polar Log (XFOIL Data)</h3>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+                            <tr>
+                              <th className="px-6 py-4">Alpha</th>
+                              <th className="px-6 py-4 text-blue-500">Cl (Lift)</th>
+                              <th className="px-6 py-4 text-rose-500">Cd (Drag)</th>
+                              <th className="px-6 py-4 text-emerald-500">Efficiency</th>
+                              <th className="px-6 py-4">Moment</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs mono">
+                            {selectedAirfoil.data.map((pt, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                <td className="px-6 py-3 font-bold">{pt.alpha.toFixed(3)}°</td>
+                                <td className="px-6 py-3 text-blue-500 font-bold">{pt.cl.toFixed(4)}</td>
+                                <td className="px-6 py-3 text-rose-500/80">{pt.cd.toFixed(5)}</td>
+                                <td className="px-6 py-3 text-emerald-500 font-black">{pt.clcd.toFixed(2)}</td>
+                                <td className="px-6 py-3 text-slate-400">{pt.cm.toFixed(4)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="h-full min-h-[500px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
+                    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
+                      <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                    </div>
+                    <h3 className="text-xl font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">System Ready</h3>
+                    <p className="text-slate-400 dark:text-slate-500 mt-2 max-w-sm text-sm font-medium">Please initiate search parameters to load aerodynamic profiles into the HUD.</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="h-full min-h-[500px] flex flex-col items-center justify-center bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
-                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
-                  <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                </div>
-                <h3 className="text-xl font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">System Ready</h3>
-                <p className="text-slate-400 dark:text-slate-500 mt-2 max-w-sm text-sm font-medium">Please initiate search parameters to load aerodynamic profiles into the HUD.</p>
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
+
+        {/* ── Lift & Drag Calculator Page ── */}
+        {activePage === 'calculator' && (
+          <LiftDragCalculator isDark={isDark} />
+        )}
+
       </main>
 
       <footer className="py-12 px-8 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#020617] transition-colors">
